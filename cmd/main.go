@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/FadyGamilM/distigo/pkg/kvdb"
 	"github.com/FadyGamilM/distigo/transport"
-	bolt "go.etcd.io/bbolt"
 )
 
 var (
@@ -22,7 +22,7 @@ func ParseFlags() {
 
 	// validation
 	if *boltDB_location == "" {
-		log.Fatal("bolt database location must be provided at runtime")
+		log.Println("bolt database location must be provided at runtime")
 	}
 
 }
@@ -31,14 +31,14 @@ func main() {
 	// parse the flags
 	ParseFlags()
 
-	db, err := bolt.Open("my.db", 0600, nil)
+	db, close, err := kvdb.NewDatabase(*boltDB_location)
 	if err != nil {
-		log.Fatalf("error trying to open a bolt db connection : %v", err)
+		log.Fatalf("error trying to open a bolt db connection : %v\n", err)
 	}
-
 	log.Println("opened successfully .. ")
+	defer close()
 
-	defer db.Close()
+	db.GetKey([]byte("host"))
 
 	// http server ..
 	r := transport.HttpRouter()
