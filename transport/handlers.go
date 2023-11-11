@@ -7,6 +7,10 @@ import (
 )
 
 func HandleGet(c *gin.Context) {
+
+	// read query params
+	key := ReadQueryParams(c, "key")
+
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -16,6 +20,10 @@ func HandleGet(c *gin.Context) {
 }
 
 func HandlePost(c *gin.Context) {
+	// read query params
+	key := ReadQueryParams(c, "key")
+	value := ReadQueryParams("val")
+
 	c.JSON(
 		http.StatusCreated,
 		gin.H{

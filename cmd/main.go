@@ -15,6 +15,8 @@ var (
 	boltDB_location = flag.String("bolt_db_location", "", "the path of the bolt database location")
 
 	distigo_http_addr = flag.String("http_addr", "127.0.0.1:8080", "the address + port that our http server is up and running on")
+
+	shard_name = flag.String("shard_name", "", "the name of the shard to find its index")
 )
 
 func ParseFlags() {
@@ -23,6 +25,10 @@ func ParseFlags() {
 	// validation
 	if *boltDB_location == "" {
 		log.Println("bolt database location must be provided at runtime")
+	}
+
+	if *shard_name == "" {
+		log.Println("shard name must be provided at runtime")
 	}
 
 }
