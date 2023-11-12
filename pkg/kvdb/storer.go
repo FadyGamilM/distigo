@@ -11,7 +11,7 @@ type Storer[K comparable, V any] interface {
 	Set(key K, val V) error
 	Get(key K) (val V, err error)
 	Update(key K, updated V) error
-	Delete(key K) (deleted V, err error)
+	Delete(key K) error
 }
 
 type KVStorage[K comparable, V any] struct {
@@ -45,6 +45,9 @@ func (kvs *KVStorage[K, V]) Set(key K, val V) error {
 }
 
 func (kvs *KVStorage[K, V]) Get(key K) (V, error) {
+	kvs.mu.RLock()
+	defer kvs.mu.RUnlock()
+
 	value, ok := kvs.data[key]
 	if !ok {
 		log.Printf("there is no key = %v stored before \n", key)
@@ -53,4 +56,32 @@ func (kvs *KVStorage[K, V]) Get(key K) (V, error) {
 	}
 
 	return value, nil
+}
+
+func (kvs *KVStorage[K, V]) Update(key K, val V) error {
+	kvs.mu.Lock()
+	defer kvs.mu.Unlock()
+
+	_, ok := kvs.data[key]
+	if ok {
+		kvs.data[key] = val
+		return nil
+	}
+
+	log.Printf("there is no key = %v stored before \n", key)
+	return errors.New("key doesn't exists")
+}
+
+func (kvs *KVStorage[K, V]) Delete(key K, val V) error {
+	kvs.mu.Lock()
+	defer kvs.mu.Unlock()
+
+	_, ok := kvs.data[key]
+	if ok {
+		delete(kvs.data, key)
+		return nil
+	}
+
+	log.Printf("there is no key = %v stored before \n", key)
+	return errors.New("key doesn't exists")
 }

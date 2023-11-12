@@ -33,3 +33,33 @@ func TestSetExistingKey(t *testing.T) {
 	t.Logf("error ➜ %v \n", err)
 	require.Error(t, err)
 }
+
+func TestUpdateKey(t *testing.T) {
+	storage := New_KV[string, int]()
+
+	if err := storage.Set("one", 1); err != nil {
+		t.Errorf("failed setting new key = %v", "one")
+	}
+
+	val, err := storage.Get("one")
+	if err != nil {
+		t.Logf("error fetching val of key = %v", "one")
+	}
+	require.NoError(t, err)
+	// before update
+	require.Equal(t, 1, val)
+
+	err = storage.Update("one", 11)
+	if err != nil {
+		t.Logf("failed updating key = %v with value = %v", "one", 11)
+	}
+	require.NoError(t, err)
+
+	// test that the key is set correctly ..
+	val, err = storage.Get("one")
+	if err != nil {
+		t.Errorf("error fetching val of key = %v", "one")
+	}
+	require.NoError(t, err)
+	require.Equal(t, 11, val)
+}
