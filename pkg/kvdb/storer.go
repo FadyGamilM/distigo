@@ -72,7 +72,7 @@ func (kvs *KVStorage[K, V]) Update(key K, val V) error {
 	return errors.New("key doesn't exists")
 }
 
-func (kvs *KVStorage[K, V]) Delete(key K, val V) error {
+func (kvs *KVStorage[K, V]) Delete(key K) error {
 	kvs.mu.Lock()
 	defer kvs.mu.Unlock()
 
