@@ -44,12 +44,24 @@ func main() {
 	log.Println("opened successfully .. ")
 	defer close()
 
-	db.GetKey([]byte("host"))
-
 	// http server ..
+	// -> create gin router to be used as the main router component within the distigo-router
 	r := transport.HttpRouter()
-	distigoRouter := &transport.DistigoRouter{Handler: r}
-	server := transport.HttpServer(distigoRouter.Handler, *distigo_http_addr)
+
+	// create the handler struct instance and inject any instance implmenets the storage-service interface (in our case we will inject the db instance which is a wrapper above the bbolt database)
+	handler := transport.NewHandler(db)
+
+	// create the distigo router by passing the gin router and the handler 
+	distigoRouter := transport.NewDistigoRouter(r, handler)
+
+	// create a new http server by passing the handlers 
+	server := transport.HttpServer(r, *distigo_http_addr)
+
+	// setup the endpoints on our server 
+	distigoRouter.SetupEndpoints()
+
+	// start the server 
+	transport.RunServer(server)
 
 	// listen for shutdown or any interrupts
 	quit := make(chan os.Signal)

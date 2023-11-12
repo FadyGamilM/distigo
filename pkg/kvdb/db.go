@@ -27,6 +27,13 @@ func NewDatabase(bolt_db_path string) (database *Database, close func() error, e
 		return nil, nil, err
 	}
 
+	// create the main and replica buckets
+	err = createMainBucket()
+	if err != nil {
+		log.Printf("error trying to create the main and replica buckets ➜ %v \n", err)
+		return nil, nil, err
+	}
+
 	// now we have a database opened and a [].db file is created
 	return &Database{kvdb: db}, db.Close, nil
 }
@@ -53,7 +60,7 @@ func createReplicaBucket() error {
 	return nil
 }
 
-func (db *Database) SetKey(key, val []byte) error {
+func (db *Database) Set(key, val []byte) error {
 	err := db.kvdb.Update(
 		func(tx *bolt.Tx) error {
 			// tx.Bucket() returns an existing bucket but it doesn't create it if it doesn't exist
@@ -74,7 +81,7 @@ func (db *Database) SetKey(key, val []byte) error {
 	return nil
 }
 
-func (db *Database) GetKey(key []byte) ([]byte, error) {
+func (db *Database) Get(key []byte) ([]byte, error) {
 	var val []byte
 	err := db.kvdb.View(
 		func(tx *bolt.Tx) error {
