@@ -1,0 +1,7 @@
+shards:
+  - name: egypt
+    idx: 0
+  - name: usa
+    idx: 1
+  - name: italy 
+    idx: 2
