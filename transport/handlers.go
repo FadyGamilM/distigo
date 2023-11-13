@@ -48,7 +48,7 @@ func (h *Handler) HandleGet(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
 		gin.H{
-			"response": val,
+			"response": string(val),
 		},
 	)
 }

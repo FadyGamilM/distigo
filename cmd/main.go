@@ -4,8 +4,11 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/FadyGamilM/distigo/pkg/kvdb"
+	"github.com/FadyGamilM/distigo/transport"
 )
 
 var (
@@ -32,61 +35,47 @@ func ParseFlags() {
 
 func main() {
 	// parse the flags
-	// ParseFlags()
+	ParseFlags()
 
-	// db, close, err := kvdb.NewDatabase(*boltDB_location)
-	// if err != nil {
-	// 	log.Fatalf("error trying to open a bolt db connection : %v\n", err)
-	// }
-	// log.Println("opened successfully .. ")
-	// defer close()
-
+	/// => Open new bolt database
 	db, close, err := kvdb.OpenBoltDB("my.db")
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("error trying to open a bolt db connection : %v\n", err)
 	}
 	defer close()
 
-	database := kvdb.NewTestDatabase(db)
+	/// => create new Database instance
+	database := kvdb.NewDatabase(db)
 	err = kvdb.CreateMainBucket(db)
 	if err != nil {
-		log.Println("error creating main bucket")
+		log.Printf("error creating main bucket ➜ %v \n", err)
 	}
-	// err = database.Set([]byte("name"), []byte("fady"))
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// time.Sleep(time.Duration(1 * time.Second))
-	val, err := database.Get([]byte("name"))
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println(string(val))
-	// // http server ..
-	// // -> create gin router to be used as the main router component within the distigo-router
-	// r := transport.HttpRouter()
 
-	// // create the handler struct instance and inject any instance implmenets the storage-service interface (in our case we will inject the db instance which is a wrapper above the bbolt database)
-	// handler := transport.NewHandler(db)
+	// http server ..
+	// -> create gin router to be used as the main router component within the distigo-router
+	r := transport.HttpRouter()
 
-	// // create the distigo router by passing the gin router and the handler
-	// distigoRouter := transport.NewDistigoRouter(r, handler)
+	// create the handler struct instance and inject any instance implmenets the storage-service interface (in our case we will inject the db instance which is a wrapper above the bbolt database)
+	handler := transport.NewHandler(database)
 
-	// // create a new http server by passing the handlers
-	// server := transport.HttpServer(r, *distigo_http_addr)
+	// create the distigo router by passing the gin router and the handler
+	distigoRouter := transport.NewDistigoRouter(r, handler)
 
-	// // setup the endpoints on our server
-	// distigoRouter.SetupEndpoints()
+	// create a new http server by passing the handlers
+	server := transport.HttpServer(r, *distigo_http_addr)
 
-	// // start the server
-	// transport.RunServer(server)
+	// setup the endpoints on our server
+	distigoRouter.SetupEndpoints()
 
-	// // listen for shutdown or any interrupts
-	// quit := make(chan os.Signal)
-	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// // wait for it
-	// <-quit
-	// // if we here, thats mean we will shut down the server gracefully
-	// transport.ShutdownGracefully(server)
+	// start the server
+	transport.RunServer(server)
+
+	// listen for shutdown or any interrupts
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// wait for it
+	<-quit
+	// if we here, thats mean we will shut down the server gracefully
+	transport.ShutdownGracefully(server)
 
 }

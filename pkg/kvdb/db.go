@@ -26,33 +26,13 @@ func OpenBoltDB(path string) (*bolt.DB, func() error, error) {
 	return db, db.Close, nil
 }
 
-func NewTestDatabase(boltdb *bolt.DB) *Database {
+// / Database Factory
+// / => creates a new database instance which is a wrapper above bbolt
+// / => creates main bucket and replica bucket so we can perform set and get later on the kvdb
+func NewDatabase(boltdb *bolt.DB) *Database {
 	return &Database{
 		kvdb: boltdb,
 	}
-}
-
-// Database Factory
-// => creates a new database instance which is a wrapper above bbolt
-// => creates main bucket and replica bucket so we can perform set and get later on the kvdb
-func NewDatabase(bolt_db_path string) (database *Database, close func() error, err error) {
-	db, err := bolt.Open(bolt_db_path, 0600, nil)
-	if err != nil {
-		// we shouldn't log.Fatal from any pkg, we should only return errors and log in the client-code (main) and only the Fatal is used in the main not even any other client code
-		log.Printf("error trying to open bbolt database ➜ %v \n", err)
-		return nil, nil, err
-	}
-
-	// create the main and replica buckets
-	err = CreateMainBucket(db)
-	if err != nil {
-		log.Printf("error trying to create the main and replica buckets ➜ %v \n", err)
-		return nil, nil, err
-	}
-
-	log.Println("successfully created the main bucket .. ")
-	// now we have a database opened and a [].db file is created
-	return &Database{kvdb: db}, db.Close, nil
 }
 
 func CreateMainBucket(db *bolt.DB) error {
@@ -71,6 +51,7 @@ func CreateMainBucket(db *bolt.DB) error {
 		log.Printf("couldn't create a main bucket ➜ %v\n", err)
 		return err
 	}
+	// check if the bucket is not nil .. 
 	if bucket == nil {
 		log.Printf("the main bucket is nil !! ➜ %v\n", err)
 		return errors.New("the main bucket is nil !! ")
@@ -78,7 +59,7 @@ func CreateMainBucket(db *bolt.DB) error {
 	return nil
 }
 
-func createReplicaBucket() error {
+func CreateReplicaBucket() error {
 	tx := bolt.Tx{}
 	_, err := tx.CreateBucket(replicaBucketName)
 	if err != nil {
