@@ -6,3 +6,6 @@
 - the magic part is distributing the keys, values, requests over all servers
 - each shard holds unique set of keys
 - so we need to implement a way to divide the shards across the keys
+- how we distribute the keys across shards :-
+    - hash(key) % len(shards) = x 
+    - if x == current_shard.index --> this key goes to this shard 

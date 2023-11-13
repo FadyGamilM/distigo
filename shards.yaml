@@ -1,7 +1,12 @@
 shards:
-  - name: egypt
-    idx: 0
-  - name: usa
-    idx: 1
-  - name: italy 
-    idx: 2
+- name: egypt
+  idx: 0
+  host: 127.0.0.1:8080
+
+- name: usa
+  idx: 1
+  host: 127.0.0.1:8081
+
+- name: italy
+  idx: 2
+  host: 127.0.0.1:8082
