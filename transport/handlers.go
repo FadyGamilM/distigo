@@ -27,11 +27,22 @@ func (h *Handler) HandleGet(c *gin.Context) {
 	if err != nil {
 		log.Printf("error trying to fetch val of key = %v ➜ &v \n", key, err)
 		c.JSON(
-			http.StatusNotFound,
+			http.StatusInternalServerError,
 			gin.H{
 				"error": fmt.Sprintf("no value with key = %v", key),
 			},
 		)
+	}
+
+	if val == nil {
+		log.Printf("key = %v is not stored before, so we couldn't find any value associated with it \n", key)
+		c.JSON(
+			http.StatusNotFound,
+			gin.H{
+				"error": fmt.Sprintf("key = %v is not stored before", key),
+			},
+		)
+		return
 	}
 
 	c.JSON(

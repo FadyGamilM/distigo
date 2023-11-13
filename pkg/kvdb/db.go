@@ -17,6 +17,21 @@ type Database struct {
 	kvdb *bolt.DB
 }
 
+func OpenBoltDB(path string) (*bolt.DB, func() error, error) {
+	db, err := bolt.Open(path, 0600, nil)
+	if err != nil {
+		log.Println("error opening database => ", err)
+		return nil, nil, err
+	}
+	return db, db.Close, nil
+}
+
+func NewTestDatabase(boltdb *bolt.DB) *Database {
+	return &Database{
+		kvdb: boltdb,
+	}
+}
+
 // Database Factory
 // => creates a new database instance which is a wrapper above bbolt
 // => creates main bucket and replica bucket so we can perform set and get later on the kvdb
@@ -29,7 +44,7 @@ func NewDatabase(bolt_db_path string) (database *Database, close func() error, e
 	}
 
 	// create the main and replica buckets
-	err = createMainBucket(db)
+	err = CreateMainBucket(db)
 	if err != nil {
 		log.Printf("error trying to create the main and replica buckets ➜ %v \n", err)
 		return nil, nil, err
@@ -40,19 +55,19 @@ func NewDatabase(bolt_db_path string) (database *Database, close func() error, e
 	return &Database{kvdb: db}, db.Close, nil
 }
 
-func createMainBucket(db *bolt.DB) error {
+func CreateMainBucket(db *bolt.DB) error {
 	// Start a writable transaction.
 	tx, err := db.Begin(true)
 	if err != nil {
 		log.Printf("error trying to begin a new transaction to create the main bucket ➜ %v\n", err)
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Commit()
 
 	// create the bucket
 	bucket, err := tx.CreateBucket(mainBucketName)
 	if err != nil {
-		tx.DB().Close()
+		// tx.DB().Close()
 		log.Printf("couldn't create a main bucket ➜ %v\n", err)
 		return err
 	}
@@ -75,13 +90,20 @@ func createReplicaBucket() error {
 }
 
 func (db *Database) Set(key, val []byte) error {
+	if db.kvdb == nil {
+		return errors.New("the db is null")
+	}
 	err := db.kvdb.Update(
 		func(tx *bolt.Tx) error {
 			// tx.Bucket() returns an existing bucket but it doesn't create it if it doesn't exist
+			if tx.Bucket(mainBucketName) == nil {
+				return errors.New("the bucket is already nill !!")
+			}
 			bucket := tx.Bucket(mainBucketName)
 			err := bucket.Put(key, val)
 			if err != nil {
 				log.Printf("error trying to set the key : %v to value : %v \n", key, val)
+				log.Printf("The error is : %v \n", err)
 				return err
 			}
 			// return nil from the transactional function
