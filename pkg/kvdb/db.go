@@ -123,7 +123,8 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 // after resharding (after we copy the entire file.db into the new shard), the distribution will be different, so half of the key will be distributed into the shard no.(i+2)
 // now we need to remove the keys from the old shard that are not belong to it anymore
 // TODO ==> and also i think i should delete keys from the new shard that belongs to the old one only .. [check later]
-func (db *Database) CleanUpKeysAfterResharding(IsResharded func(key string) bool) error {
+// ==> this method is named "CleanUpKeysAfterResharding"
+func (db *Database) Pruge(IsResharded func(key string) bool) error {
 	// define inmemory structure to save all the keys on
 	keys := make([]string, 0)
 
@@ -167,4 +168,21 @@ func (db *Database) CleanUpKeysAfterResharding(IsResharded func(key string) bool
 		},
 	)
 
+}
+
+func (db *Database) LogShardKeys() error {
+	// read-only transaction via View() to log all keys
+	return db.kvdb.View(
+		func(tx *bolt.Tx) error {
+			if tx.Bucket(mainBucketName) == nil {
+				return errors.New("the bucket is already nill !!")
+			}
+			bucket := tx.Bucket(mainBucketName)
+			// loop through all keys in the bucket
+			return bucket.ForEach(
+				func(k, v []byte) error {
+					log.Printf("{ Key : %v, Val : %v } \n", string(k), string(v))
+					return nil
+				})
+		})
 }

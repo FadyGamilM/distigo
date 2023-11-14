@@ -22,4 +22,6 @@ func (dr *DistigoRouter) SetupEndpoints() {
 	routerGroup := dr.r.Group("/api/distigo")
 	routerGroup.GET("/get", dr.handler.HandleGet)
 	routerGroup.POST("/set", dr.handler.HandlePost)
+	routerGroup.DELETE("/purge", dr.handler.HandlePurge)
+	routerGroup.GET("/logs", dr.handler.GetAllShardKeys)
 }

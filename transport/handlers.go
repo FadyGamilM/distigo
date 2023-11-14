@@ -189,3 +189,33 @@ func (h *Handler) HandlePost(c *gin.Context) {
 		return
 	}
 }
+
+func (h *Handler) HandlePurge(c *gin.Context) {
+	h.StorageService.Pruge(
+		func(key string) bool {
+			disrtirbutedShard, err := h.ShardsConfig.DistributeKeyOnShards(key)
+			if err != nil {
+				log.Printf("error trying to distribute the key into the new shard : %v\n", err)
+				c.JSON(
+					http.StatusInternalServerError,
+					gin.H{
+						"error": fmt.Sprintf("error trying to distribute the key into the new shard : %v\n", err),
+					},
+				)
+			}
+			return h.HostedShardIndex == disrtirbutedShard
+		},
+	)
+}
+
+func (h *Handler) GetAllShardKeys(c *gin.Context) {
+	log.Printf("Printing Keys Of Shard no.[%v]\n", h.HostedShardIndex)
+	if err := h.StorageService.LogShardKeys(); err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"error": fmt.Sprintf("error trying to log the keys of the current shard : %v", err),
+			},
+		)
+	}
+}
