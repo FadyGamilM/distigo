@@ -14,10 +14,18 @@ run:
 
 run_egypt_shard:	
 	$(GO_RUN) cmd/main.go -bolt_db_location="$(CURRENT_WORKING_DIR)\egypt.db" -http_addr=127.0.0.1:8080 -shard_name=egypt -shards_configs="$(CURRENT_WORKING_DIR)/shards.yaml" 
+
 run_usa_shard:
 	$(GO_RUN) cmd/main.go -bolt_db_location="$(CURRENT_WORKING_DIR)\usa.db" -http_addr=127.0.0.1:8081 -shard_name=usa -shards_configs="$(CURRENT_WORKING_DIR)/shards.yaml" 
+
 run_italy_shard:
 	$(GO_RUN) cmd/main.go -bolt_db_location="$(CURRENT_WORKING_DIR)\italy.db" -http_addr=127.0.0.1:8082 -shard_name=italy -shards_configs="$(CURRENT_WORKING_DIR)/shards.yaml" 
+
+run_uka_shard:
+	$(GO_RUN) cmd/main.go -bolt_db_location="$(CURRENT_WORKING_DIR)\uka.db" -http_addr=127.0.0.1:8083 -shard_name=uka -shards_configs="$(CURRENT_WORKING_DIR)/shards.yaml" 
+
+run_saudia_shard:
+	$(GO_RUN) cmd/main.go -bolt_db_location="$(CURRENT_WORKING_DIR)\saudia.db" -http_addr=127.0.0.1:8082 -shard_name=saudia -shards_configs="$(CURRENT_WORKING_DIR)/shards.yaml" 
 
 clean: 
 	$(GOCLEAN)

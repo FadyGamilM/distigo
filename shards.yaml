@@ -7,6 +7,10 @@ shards:
   idx: 1
   host: 127.0.0.1:8081
 
-- name: italy
+- name: saudia
   idx: 2
   host: 127.0.0.1:8082
+
+- name: uka
+  idx: 3
+  host: 127.0.0.1:8083

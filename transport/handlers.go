@@ -83,7 +83,7 @@ func (h *Handler) HandleGet(c *gin.Context) {
 			gin.H{
 				"from-shard": h.ShardsConfig.Shards[distributedShardIdx].Name,
 				"from-host":  h.ShardsAddrs[distributedShardIdx],
-				"response":   body,
+				"response":   string(body),
 			},
 		)
 		return
@@ -128,6 +128,8 @@ func (h *Handler) HandlePost(c *gin.Context) {
 
 	// distribute the key (just find the hash for response right now)
 	distributedShardIdx, err := h.ShardsConfig.DistributeKeyOnShards(key)
+	log.Println("the distributed shard index is ➜ ", distributedShardIdx)
+	log.Println("the hosted shard index is ➜ ", h.HostedShardIndex)
 
 	if err != nil {
 		log.Println("error finding the appropriate shard for setting the key,val into")
@@ -153,6 +155,8 @@ func (h *Handler) HandlePost(c *gin.Context) {
 			return
 		}
 	} else {
+		log.Println("the request uri is ==> ", c.Request.RequestURI)
+		fmt.Sprintf("forwarding the request to the appropriate shard which hosted on ➜ http://%v", h.ShardsAddrs[distributedShardIdx]+c.Request.RequestURI)
 		resp, err := http.Post("http://"+h.ShardsAddrs[distributedShardIdx]+c.Request.RequestURI, "application/json", bytes.NewBuffer([]byte(value)))
 		if err != nil {
 			c.JSON(
@@ -177,7 +181,7 @@ func (h *Handler) HandlePost(c *gin.Context) {
 		c.JSON(
 			http.StatusCreated,
 			gin.H{
-				"response":   body,
+				"response":   string(body),
 				"from-shard": h.ShardsConfig.Shards[distributedShardIdx].Name,
 				"from-host":  h.ShardsAddrs[distributedShardIdx],
 			},

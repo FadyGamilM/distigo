@@ -51,7 +51,7 @@ func CreateMainBucket(db *bolt.DB) error {
 		log.Printf("couldn't create a main bucket ➜ %v\n", err)
 		return err
 	}
-	// check if the bucket is not nil .. 
+	// check if the bucket is not nil ..
 	if bucket == nil {
 		log.Printf("the main bucket is nil !! ➜ %v\n", err)
 		return errors.New("the main bucket is nil !! ")
@@ -118,4 +118,53 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 	}
 
 	return val, nil
+}
+
+// after resharding (after we copy the entire file.db into the new shard), the distribution will be different, so half of the key will be distributed into the shard no.(i+2)
+// now we need to remove the keys from the old shard that are not belong to it anymore
+// TODO ==> and also i think i should delete keys from the new shard that belongs to the old one only .. [check later]
+func (db *Database) CleanUpKeysAfterResharding(IsResharded func(key string) bool) error {
+	// define inmemory structure to save all the keys on
+	keys := make([]string, 0)
+
+	// append all keys to save them (read-only transaction via View())
+	err := db.kvdb.View(
+		func(tx *bolt.Tx) error {
+			if tx.Bucket(mainBucketName) == nil {
+				return errors.New("the bucket is already nill !!")
+			}
+			bucket := tx.Bucket(mainBucketName)
+			// loop through all keys in the bucket
+			return bucket.ForEach(func(k, v []byte) error {
+				// save it to be deleted only if its not distributed in another shard
+				if IsResharded(string(k)) {
+					keys = append(keys, string(k))
+				}
+				return nil
+			})
+		})
+
+	if err != nil {
+		log.Printf("error trying to save the keys before deleting them from the shard : %v \n", err)
+	}
+
+	// modify the bucket by deleting the un-owned keys anymore
+	return db.kvdb.Update(
+		func(tx *bolt.Tx) error {
+			if tx.Bucket(mainBucketName) == nil {
+				return errors.New("the bucket is already nill !!")
+			}
+			bucket := tx.Bucket(mainBucketName)
+
+			// loop through the saved keys because they are the only keys which are resharded to the new shard
+			for _, keyToBeDeleted := range keys {
+				if err := bucket.Delete([]byte(keyToBeDeleted)); err != nil {
+					log.Printf("error while trying to delete the distributed key from it's old shard : %v\n", err)
+					return err
+				}
+			}
+			return nil
+		},
+	)
+
 }
